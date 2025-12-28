@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Automations & Pages</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, Roboto, "Segoe UI", Arial; max-width: 780px; margin: 3rem auto; padding: 1rem; line-height:1.5; }
+      pre { background:#f6f8fa; padding:1rem; border-radius:6px; overflow:auto; white-space:pre-wrap; }
+      .muted { color:#555; font-size:0.95rem; }
+      .ok { color: #0b6623; }
+      .bad { color: #a50e0e; }
+    </style>
+  </head>
+  <body>
+    <h1>Automatic Octo Enigma — Automation status</h1>
+    <p class="muted">This page displays the latest result written by the scheduled checker (status.json).</p>
+
+    <h2>Latest check</h2>
+    <pre id="status">Loading...</pre>
+
+    <script>
+      async function loadStatus() {
+        try {
+          const r = await fetch('/status.json', {cache: "no-store"});
+          if (!r.ok) {
+            // If file doesn't exist yet, show friendly message
+            document.getElementById('status').textContent = "No status.json found yet. Run the workflow or wait for the scheduled run.";
+            return;
+          }
+          const data = await r.json();
+          // Format a friendly summary above the JSON
+          const summary = [
+            `URL: ${data.url}`,
+            `Checked at: ${data.checked_at}`,
+            `Status code: ${data.status_code ?? "N/A"}`,
+            `OK: ${data.ok}`,
+            data.title ? `Title: ${data.title}` : null,
+            data.error ? `Error: ${data.error}` : null
+          ].filter(Boolean).join('\n');
+
+          const statusEl = document.getElementById('status');
+          statusEl.textContent = summary + '\n\n' + JSON.stringify(data, null, 2);
+
+          // Simple color cue
+          if (data.ok) {
+            statusEl.classList.add('ok');
+            statusEl.classList.remove('bad');
+          } else {
+            statusEl.classList.add('bad');
+            statusEl.classList.remove('ok');
+          }
+        } catch (e) {
+          document.getElementById('status').textContent = "Failed to load status.json: " + e;
+        }
+      }
+      loadStatus();
+    </script>
+  </body>
+</html>
